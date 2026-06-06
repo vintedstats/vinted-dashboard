@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vinted Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal:        #1D9E75;
+    --teal-light:  #E1F5EE;
+    --teal-mid:    #9FE1CB;
+    --coral:       #D85A30;
+    --coral-light: #FAECE7;
+    --amber:       #BA7517;
+    --amber-light: #FAEEDA;
+    --purple:      #534AB7;
+    --purple-light:#EEEDFE;
+    --bg:          #F7F8FA;
+    --surface:     #FFFFFF;
+    --surface2:    #F1F3F6;
+    --border:      rgba(0,0,0,0.08);
+    --text:        #1A1A2E;
+    --text2:       #5A6070;
+    --text3:       #9BA3B0;
+    --radius:      12px;
+    --radius-sm:   8px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:       #0F1117;
+      --surface:  #1A1D27;
+      --surface2: #22263A;
+      --border:   rgba(255,255,255,0.08);
+      --text:     #F0F2FF;
+      --text2:    #8892A4;
+      --text3:    #4A5568;
+    }
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1.5rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--teal);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logo-mark svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: white;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .brand {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+  }
+
+  .brand span {
+    color: var(--teal);
+  }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-primary {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 8px 16px;
+    font-size: 13px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.97); }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px 13px;
+    font-size: 13px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn-ghost:hover { background: var(--surface2); }
+
+  /* ── LAYOUT ── */
+  .main {
+    flex: 1;
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.75rem 1.5rem 3rem;
+  }
+
+  /* ── PAGE TITLE ── */
+  .page-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--text);
+  }
+
+  .page-header p {
+    font-size: 13px;
+    color: var(--text2);
+    margin-top: 2px;
+  }
+
+  /* ── METRIC CARDS ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.1rem 1.25rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .metric-card.accent-teal::before   { background: var(--teal); }
+  .metric-card.accent-coral::before  { background: var(--coral); }
+  .metric-card.accent-amber::before  { background: var(--amber); }
+  .metric-card.accent-purple::before { background: var(--purple); }
+
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+
+  .metric-icon.teal   { background: var(--teal-light);   color: var(--teal); }
+  .metric-icon.coral  { background: var(--coral-light);  color: var(--coral); }
+  .metric-icon.amber  { background: var(--amber-light);  color: var(--amber); }
+  .metric-icon.purple { background: var(--purple-light); color: var(--purple); }
+
+  .metric-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 4px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .metric-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    margin-top: 5px;
+  }
+
+  .badge-up   { background: var(--teal-light);  color: #0F6E56; }
+  .badge-down { background: var(--coral-light);  color: #993C1D; }
+  .badge-neu  { background: var(--surface2);     color: var(--text2); }
+
+  /* ── CHART CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  .tab-pills {
+    display: flex;
+    gap: 2px;
+    background: var(--surface2);
+    border-radius: 7px;
+    padding: 3px;
+  }
+
+  .tab-pill {
+    font-size: 11px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 500;
+    padding: 4px 12px;
+    border: none;
+    background: transparent;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+
+  .tab-pill.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /* ── TWO COLUMN ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  @media (max-width: 680px) {
+    .two-col { grid-template-columns: 1fr; }
+    .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 400px) {
+    .metrics-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ── SALES LIST ── */
+  .sales-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sale-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 8px;
+  }
+
+  .sale-row:last-child { border-bottom: none; }
+
+  .sale-info { flex: 1; min-width: 0; }
+
+  .sale-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sale-meta {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 1px;
+  }
+
+  .sale-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .sale-amount {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--teal);
+  }
+
+  .sale-cat {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: var(--teal-light);
+    color: #0F6E56;
+  }
+
+  .del-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 15px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: color 0.1s, background 0.1s;
+  }
+
+  .del-btn:hover {
+    color: var(--coral);
+    background: var(--coral-light);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text3);
+    font-size: 13px;
+  }
+
+  .empty-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+
+  .modal-bg.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: 16px;
+    padding: 1.75rem;
+    width: 380px;
+    max-width: calc(100vw - 2rem);
+    border: 1px solid var(--border);
+    animation: modalIn 0.18s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    color: var(--text);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+  }
+
+  .form-error {
+    font-size: 11px;
+    color: var(--coral);
+    margin-top: 4px;
+    display: none;
+  }
+
+  .form-error.show { display: block; }
+
+  .modal-footer {
+    display: flex;
+    gap: 8px;
+    margin-top: 1.25rem;
+  }
+
+  .modal-footer .btn-ghost { flex: 1; }
+  .modal-footer .btn-primary { flex: 2; justify-content: center; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    background: var(--text);
+    color: var(--bg);
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 300;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── EXPORT BAR ── */
+  .export-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  /* ── CATEGORY COLOR DOTS ── */
+  .cat-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .cat-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text2);
+    background: var(--surface2);
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .cat-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <nav class="topbar">
+    <div class="topbar-left">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      </div>
+      <div>
+        <div class="brand">Vinted<span>Analytics</span></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-ghost" onclick="exportCSV()">⬇ CSV Export</button>
+      <button class="btn-primary" onclick="openModal()">＋ Verkauf eintragen</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+      <h1 id="pageTitle">Übersicht</h1>
+      <p id="pageSubtitle">Lade Deine Verkaufsdaten und behalte den Überblick</p>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics-grid">
+      <div class="metric-card accent-teal">
+        <div class="metric-icon teal">📅</div>
+        <div class="metric-label">Diesen Monat</div>
+        <div class="metric-value" id="m-month">0,00 €</div>
+        <div id="m-month-badge" class="metric-badge badge-neu">— Verkäufe</div>
+      </div>
+      <div class="metric-card accent-coral">
+        <div class="metric-icon coral">📆</div>
+        <div class="metric-label">Letzter Monat</div>
+        <div class="metric-value" id="m-last">0,00 €</div>
+        <div id="m-last-badge" class="metric-badge badge-neu">— Verkäufe</div>
+      </div>
+      <div class="metric-card accent-amber">
+        <div class="metric-icon amber">💰</div>
+        <div class="metric-label">Gesamt</div>
+        <div class="metric-value" id="m-total">0,00 €</div>
+        <div id="m-total-badge" class="metric-badge badge-neu">— Verkäufe</div>
+      </div>
+      <div class="metric-card accent-purple">
+        <div class="metric-icon purple">📊</div>
+        <div class="metric-label">Ø pro Verkauf</div>
+        <div class="metric-value" id="m-avg">0,00 €</div>
+        <div id="m-avg-badge" class="metric-badge badge-neu">—</div>
+      </div>
+    </div>
+
+    <!-- MAIN CHART -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Umsatzverlauf</div>
+          <div class="card-sub" id="chartSubtitle">Alle Monate im Überblick</div>
+        </div>
+        <div class="tab-pills">
+          <button class="tab-pill active" id="tab-m" onclick="switchView('month')">Monat</button>
+          <button class="tab-pill" id="tab-w" onclick="switchView('week')">Woche</button>
+          <button class="tab-pill" id="tab-y" onclick="switchView('year')">Jahr</button>
+        </div>
+      </div>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#1D9E75"></span>Umsatz (€)</span>
+        <span><span class="legend-dot" style="background:#9FE1CB; outline: 1px dashed #1D9E75; outline-offset:1px;"></span>Anzahl Verkäufe</span>
+      </div>
+      <div style="position:relative; width:100%; height:240px;">
+        <canvas id="mainChart" role="img" aria-label="Umsatzverlauf über Zeit">Keine Daten vorhanden.</canvas>
+      </div>
+    </div>
+
+    <!-- TWO COL -->
+    <div class="two-col">
+
+      <!-- DONUT -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Kategorien</div>
+            <div class="card-sub">Umsatz nach Produktart</div>
+          </div>
+        </div>
+        <div style="position:relative; width:100%; height:200px;">
+          <canvas id="catChart" role="img" aria-label="Umsatz nach Kategorien">Keine Kategoriedaten.</canvas>
+        </div>
+        <div class="cat-legend" id="catLegend"></div>
+      </div>
+
+      <!-- SALES LIST -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Letzte Verkäufe</div>
+            <div class="card-sub" id="saleCount">0 Einträge</div>
+          </div>
+          <button class="btn-ghost" style="font-size:11px; padding:5px 10px;" onclick="clearAll()">Alle löschen</button>
+        </div>
+        <div class="sales-scroll" id="salesList">
+          <div class="empty-state">
+            <span class="empty-icon">🛍️</span>
+            Noch keine Verkäufe eingetragen.<br>Klick auf „Verkauf eintragen"!
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modalBg" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-title">🛍️ Neuer Verkauf</div>
+    <div class="form-row">
+      <div class="form-group full">
+        <label>Artikelname</label>
+        <input type="text" id="f-name" placeholder="z.B. Levi's 501 Jeans" />
+        <div class="form-error" id="err-name">Bitte einen Namen eingeben.</div>
+      </div>
+      <div class="form-group">
+        <label>Preis (€)</label>
+        <input type="number" id="f-price" placeholder="0.00" step="0.01" min="0.01" />
+        <div class="form-error" id="err-price">Bitte einen gültigen Preis eingeben.</div>
+      </div>
+      <div class="form-group">
+        <label>Datum</label>
+        <input type="date" id="f-date" />
+        <div class="form-error" id="err-date">Bitte ein Datum wählen.</div>
+      </div>
+      <div class="form-group full">
+        <label>Kategorie</label>
+        <input type="text" id="f-cat" placeholder="z.B. Jeans, Schuhe, Jacken…" list="cat-suggestions" />
+        <datalist id="cat-suggestions">
+          <option value="Jeans">
+          <option value="Schuhe">
+          <option value="Jacken">
+          <option value="Kleider">
+          <option value="Pullover">
+          <option value="Hemden">
+          <option value="Taschen">
+          <option value="Accessoires">
+          <option value="Sportkleidung">
+          <option value="Sonstiges">
+        </datalist>
+      </div>
+      <div class="form-group">
+        <label>Versandkosten (€)</label>
+        <input type="number" id="f-ship" placeholder="0.00" step="0.01" min="0" />
+      </div>
+      <div class="form-group">
+        <label>Vinted-Gebühr (€)</label>
+        <input type="number" id="f-fee" placeholder="0.00" step="0.01" min="0" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Abbrechen</button>
+      <button class="btn-primary" onclick="saveSale()">✓ Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ─── STATE ─── */
+const CAT_COLORS = ['#1D9E75','#D85A30','#534AB7','#BA7517','#993556','#185FA5','#639922','#5F5E5A','#0F6E56','#993C1D'];
+let sales = [];
+let mainChart, catChart;
+let currentView = 'month';
+
+/* ─── INIT ─── */
+window.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('vinted_v3');
+  if (saved) {
+    try { sales = JSON.parse(saved); } catch(e) { sales = []; }
+  }
+  document.getElementById('f-date').value = todayStr();
+  updatePageHeader();
+  if (!sales.length) loadDemo();
+  else renderAll();
+});
+
+function todayStr() {
+  return new Date().toISOString().split('T')[0];
+}
+
+function persist() {
+  localStorage.setItem('vinted_v3', JSON.stringify(sales));
+}
+
+function fmt(n) {
+  return n.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+}
+
+function updatePageHeader() {
+  const now = new Date();
+  document.getElementById('pageTitle').textContent = 'Übersicht';
+  document.getElementById('pageSubtitle').textContent =
+    now.toLocaleDateString('de-DE', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+}
+
+/* ─── DEMO DATA ─── */
+function loadDemo() {
+  const y = new Date().getFullYear();
+  const m = String(new Date().getMonth() + 1).padStart(2,'0');
+  const pm = String(new Date().getMonth() === 0 ? 12 : new Date().getMonth()).padStart(2,'0');
+  const py = new Date().getMonth() === 0 ? y - 1 : y;
+  sales = [
+    { id:1,  name:"Levi's 501 Jeans",      price:28,  ship:3.99, fee:1.40, cat:"Jeans",    date:`${y}-${m}-02` },
+    { id:2,  name:"Nike Air Max 90",        price:55,  ship:5.99, fee:2.75, cat:"Schuhe",   date:`${y}-${m}-05` },
+    { id:3,  name:"Zara Winterjacke",       price:35,  ship:3.99, fee:1.75, cat:"Jacken",   date:`${y}-${m}-10` },
+    { id:4,  name:"H&M Hoodie grau",        price:12,  ship:3.99, fee:0.60, cat:"Pullover", date:`${y}-${m}-14` },
+    { id:5,  name:"Tommy Hilfiger Hemd",    price:22,  ship:3.99, fee:1.10, cat:"Hemden",   date:`${y}-${m}-18` },
+    { id:6,  name:"Adidas Superstar weiß",  price:44,  ship:5.99, fee:2.20, cat:"Schuhe",   date:`${py}-${pm}-08` },
+    { id:7,  name:"Vintage Lederjacke",     price:68,  ship:5.99, fee:3.40, cat:"Jacken",   date:`${py}-${pm}-15` },
+    { id:8,  name:"Stradivarius Sommerkleid",price:18, ship:3.99, fee:0.90, cat:"Kleider",  date:`${py}-${pm}-22` },
+    { id:9,  name:"Diesel Jeans W32",       price:39,  ship:3.99, fee:1.95, cat:"Jeans",    date:`${py}-${pm}-28` },
+    { id:10, name:"Fjällräven Rucksack",    price:72,  ship:5.99, fee:3.60, cat:"Taschen",  date:`${py}-${pm}-03` },
+  ];
+  renderAll();
+}
+
+/* ─── MODAL ─── */
+function openModal() {
+  ['err-name','err-price','err-date'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+  document.getElementById('f-name').value  = '';
+  document.getElementById('f-price').value = '';
+  document.getElementById('f-ship').value  = '';
+  document.getElementById('f-fee').value   = '';
+  document.getElementById('f-cat').value   = '';
+  document.getElementById('f-date').value  = todayStr();
+  document.getElementById('modalBg').classList.add('open');
+  setTimeout(() => document.getElementById('f-name').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('open');
+}
+
+function bgClose(e) {
+  if (e.target === document.getElementById('modalBg')) closeModal();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Enter' && document.getElementById('modalBg').classList.contains('open')) saveSale();
+});
+
+function saveSale() {
+  const name  = document.getElementById('f-name').value.trim();
+  const price = parseFloat(document.getElementById('f-price').value);
+  const date  = document.getElementById('f-date').value;
+  const cat   = document.getElementById('f-cat').value.trim() || 'Sonstiges';
+  const ship  = parseFloat(document.getElementById('f-ship').value) || 0;
+  const fee   = parseFloat(document.getElementById('f-fee').value)  || 0;
+
+  let valid = true;
+  document.getElementById('err-name').classList.toggle('show', !name);
+  document.getElementById('err-price').classList.toggle('show', isNaN(price) || price <= 0);
+  document.getElementById('err-date').classList.toggle('show', !date);
+  if (!name || isNaN(price) || price <= 0 || !date) return;
+
+  sales.push({ id: Date.now(), name, price, ship, fee, cat, date });
+  persist();
+  closeModal();
+  showToast('✓ Verkauf gespeichert!');
+  renderAll();
+}
+
+function deleteSale(id) {
+  sales = sales.filter(s => s.id !== id);
+  persist();
+  showToast('🗑 Eintrag gelöscht');
+  renderAll();
+}
+
+function clearAll() {
+  if (!sales.length) return;
+  if (!confirm('Wirklich alle ' + sales.length + ' Einträge löschen?')) return;
+  sales = [];
+  persist();
+  showToast('Alle Daten gelöscht');
+  renderAll();
+}
+
+/* ─── TOAST ─── */
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ─── METRICS ─── */
+function renderMetrics() {
+  const now = new Date();
+  const thisM = now.toISOString().slice(0,7);
+  const lastMDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+  const lastM = lastMDate.toISOString().slice(0,7);
+
+  const thisSales = sales.filter(s => s.date.startsWith(thisM));
+  const lastSales = sales.filter(s => s.date.startsWith(lastM));
+
+  const sumThis  = thisSales.reduce((a,s) => a + s.price, 0);
+  const sumLast  = lastSales.reduce((a,s) => a + s.price, 0);
+  const sumTotal = sales.reduce((a,s) => a + s.price, 0);
+  const avgVal   = sales.length ? sumTotal / sales.length : 0;
+
+  document.getElementById('m-month').textContent = fmt(sumThis);
+  document.getElementById('m-last').textContent  = fmt(sumLast);
+  document.getElementById('m-total').textContent = fmt(sumTotal);
+  document.getElementById('m-avg').textContent   = fmt(avgVal);
+
+  document.getElementById('m-month-badge').textContent  = thisSales.length + ' Verkäufe';
+  document.getElementById('m-last-badge').textContent   = lastSales.length + ' Verkäufe';
+  document.getElementById('m-total-badge').textContent  = sales.length + ' Verkäufe gesamt';
+  document.getElementById('saleCount').textContent      = sales.length + ' Einträge';
+
+  if (sumLast > 0) {
+    const pct = ((sumThis - sumLast) / sumLast * 100);
+    const up  = pct >= 0;
+    const badge = document.getElementById('m-avg-badge');
+    badge.className = 'metric-badge ' + (up ? 'badge-up' : 'badge-down');
+    badge.textContent = (up ? '▲ +' : '▼ ') + Math.abs(Math.round(pct)) + '% vs. Vormonat';
+  } else {
+    const badge = document.getElementById('m-avg-badge');
+    badge.className = 'metric-badge badge-neu';
+    badge.textContent = '—';
+  }
+}
+
+/* ─── MAIN CHART ─── */
+function getKey(dateStr) {
+  if (currentView === 'month') return dateStr.slice(0,7);
+  if (currentView === 'year')  return dateStr.slice(0,4);
+  const d = new Date(dateStr);
+  const s = new Date(d); s.setDate(d.getDate() - ((d.getDay()+6)%7));
+  return s.toISOString().split('T')[0];
+}
+
+function getLabel(key) {
+  if (currentView === 'year') return key;
+  if (currentView === 'month') {
+    const [y,m] = key.split('-');
+    return new Date(y, m-1, 1).toLocaleDateString('de-DE',{month:'short',year:'2-digit'});
+  }
+  return 'KW ' + isoWeek(new Date(key));
+}
+
+function isoWeek(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay()||7));
+  const y0 = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil((((date - y0) / 86400000) + 1) / 7);
+}
+
+function renderMainChart() {
+  const grouped = {};
+  sales.forEach(s => {
+    const k = getKey(s.date);
+    if (!grouped[k]) grouped[k] = { sum:0, count:0 };
+    grouped[k].sum += s.price;
+    grouped[k].count++;
+  });
+
+  const keys   = Object.keys(grouped).sort();
+  const labels = keys.map(getLabel);
+  const sums   = keys.map(k => Math.round(grouped[k].sum * 100) / 100);
+  const counts = keys.map(k => grouped[k].count);
+
+  const subtitles = { month:'Monatlicher Umsatzverlauf', week:'Wöchentlicher Umsatzverlauf', year:'Jährlicher Umsatzverlauf' };
+  document.getElementById('chartSubtitle').textContent = subtitles[currentView];
+
+  if (mainChart) mainChart.destroy();
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  mainChart = new Chart(ctx, {
+    data: {
+      labels: labels.length ? labels : ['Keine Daten'],
+      datasets: [
+        {
+          type: 'bar',
+          label: 'Umsatz (€)',
+          data: sums,
+          backgroundColor: '#1D9E75',
+          borderRadius: 6,
+          yAxisID: 'y',
+        },
+        {
+          type: 'line',
+          label: 'Verkäufe',
+          data: counts,
+          borderColor: '#9FE1CB',
+          borderWidth: 2.5,
+          borderDash: [5,4],
+          pointBackgroundColor: '#1D9E75',
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          tension: 0.4,
+          yAxisID: 'y2',
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.datasetIndex === 0
+              ? ' ' + fmt(ctx.raw)
+              : ' ' + ctx.raw + ' Verkäufe'
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color:'rgba(0,0,0,0.04)' },
+          ticks: { font:{family:'Sora',size:11}, color:'#888', autoSkip:false, maxRotation:40 }
+        },
+        y: {
+          position:'left',
+          grid: { color:'rgba(0,0,0,0.04)' },
+          ticks: { font:{family:'JetBrains Mono',size:11}, color:'#888', callback: v => v + ' €' }
+        },
+        y2: {
+          position:'right',
+          grid:{ display:false },
+          ticks:{ font:{family:'JetBrains Mono',size:11}, color:'#9FE1CB', stepSize:1 }
+        }
+      }
+    }
+  });
+}
+
+/* ─── CAT CHART ─── */
+function renderCatChart() {
+  const cats = {};
+  sales.forEach(s => {
+    if (!cats[s.cat]) cats[s.cat] = 0;
+    cats[s.cat] += s.price;
+  });
+
+  const labels = Object.keys(cats);
+  const data   = labels.map(k => Math.round(cats[k] * 100) / 100);
+  const colors = labels.map((_,i) => CAT_COLORS[i % CAT_COLORS.length]);
+
+  if (catChart) catChart.destroy();
+  const ctx2 = document.getElementById('catChart').getContext('2d');
+  catChart = new Chart(ctx2, {
+    type:'doughnut',
+    data: {
+      labels: labels.length ? labels : ['Keine Daten'],
+      datasets:[{
+        data: data.length ? data : [1],
+        backgroundColor: data.length ? colors : ['#e0e0e0'],
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive:true,
+      maintainAspectRatio:false,
+      cutout:'70%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{ label: ctx => ' ' + ctx.label + ': ' + fmt(ctx.raw) }
+        }
+      }
+    }
+  });
+
+  const legend = document.getElementById('catLegend');
+  legend.innerHTML = labels.length
+    ? labels.map((l,i) => `<div class="cat-chip"><span class="cat-dot" style="background:${colors[i]}"></span>${l}</div>`).join('')
+    : '';
+}
+
+/* ─── SALES LIST ─── */
+function renderSalesList() {
+  const list = document.getElementById('salesList');
+  if (!sales.length) {
+    list.innerHTML = '<div class="empty-state"><span class="empty-icon">🛍️</span>Noch keine Verkäufe eingetragen.<br>Klick auf „Verkauf eintragen"!</div>';
+    return;
+  }
+
+  const sorted = [...sales].sort((a,b) => b.date.localeCompare(a.date));
+  list.innerHTML = sorted.map(s => {
+    const net = s.price - (s.ship || 0) - (s.fee || 0);
+    return `
+    <div class="sale-row">
+      <div class="sale-info">
+        <div class="sale-name">${esc(s.name)}</div>
+        <div class="sale-meta">
+          ${new Date(s.date+'T12:00:00').toLocaleDateString('de-DE')}
+          ${s.ship || s.fee ? ' · Netto: ' + fmt(net) : ''}
+        </div>
+      </div>
+      <div class="sale-right">
+        <span class="sale-cat">${esc(s.cat)}</span>
+        <span class="sale-amount">+${fmt(s.price)}</span>
+        <button class="del-btn" onclick="deleteSale(${s.id})" title="Löschen">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+/* ─── VIEW SWITCH ─── */
+function switchView(v) {
+  currentView = v;
+  ['month','week','year'].forEach(t => {
+    document.getElementById('tab-' + t[0]).classList.toggle('active', t === v);
+  });
+  renderMainChart();
+}
+
+/* ─── CSV EXPORT ─── */
+function exportCSV() {
+  if (!sales.length) { showToast('Keine Daten zum Exportieren!'); return; }
+  const rows = [['Datum','Artikel','Kategorie','Preis (€)','Versand (€)','Gebühr (€)','Netto (€)']];
+  sales.sort((a,b)=>a.date.localeCompare(b.date)).forEach(s => {
+    const net = (s.price - (s.ship||0) - (s.fee||0)).toFixed(2);
+    rows.push([s.date, s.name, s.cat, s.price.toFixed(2), (s.ship||0).toFixed(2), (s.fee||0).toFixed(2), net]);
+  });
+  const csv = rows.map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'vinted-umsatz.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSV exportiert!');
+}
+
+/* ─── RENDER ALL ─── */
+function renderAll() {
+  renderMetrics();
+  renderMainChart();
+  renderCatChart();
+  renderSalesList();
+}
+</script>
+</body>
+</html>
